@@ -4,7 +4,7 @@ import requests
 st.set_page_config(page_title="Akıllı Gezi Rehberi 🎉", page_icon="🌍", layout="wide")
 
 BASE_URL = "https://gezi-rehberi-1.onrender.com"
-STRAPI_TOKEN = "cf39180c655853eb5774dbc4820709ce10b634e7bdc6d90d4a33f96e11f82186ddd2989c299aa35bf2598d73d1b6716dc37d3994b7b89935ad1d8549dd7fd3ca2b8e80255bd9cdddd6eaa508ba50c96733f50e5c666ee6273374fbc3e99b4b1ebc024c2d676efbf09aa6c2c79ce71c556b40e03a7ff9acac254350226fc275f4"
+STRAPI_TOKEN = "2abfc25c36f8bc3ef6c60a350ab7da984b885cc0c7e48efb2ff440660c620eaef60ee968c627207316793b1709c5d58e8fed445c8d3e9bea4eecd31d205d17c0e218a2db4e3a96fb0f952037668d8acbb29ec62183a8f1d965f7804bd5897916d441cebad04147fd8599fba267df6b4fdc40a8d69f66a4007cfe129e416f1517"
 
 headers = {
     "Authorization": f"Bearer {STRAPI_TOKEN}",
