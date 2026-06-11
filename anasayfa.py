@@ -1,21 +1,18 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="Yapay Zeka Destekli Gezi Rehberi", page_icon="🌍", layout="wide")
+st.set_page_config(page_title="Akıllı Gezi Rehberi 🎉", page_icon="🌍", layout="wide")
 
 BASE_URL = "https://gezi-rehberi-1.onrender.com"
-STRAPI_TOKEN = "15e0d7dd5cc412d13012d7abdeab5ad54b624a8ab4386e08c3b6039000301a2c166ab03f9fdf940fcac7d51a8c7b19f6726b79b16fb3a6626a97459348ab01b4eefe9bfee7d1be761c538c166ccd5a9e7470aff1d435d56b84ee1109a5f6e600b908aedc220ce5e1443d6d722289a46216bbb7409fb452071373e0d688c95264"
+STRAPI_TOKEN = "cf39180c655853eb5774dbc4820709ce10b634e7bdc6d90d4a33f96e11f82186ddd2989c299aa35bf2598d73d1b6716dc37d3994b7b89935ad1d8549dd7fd3ca2b8e80255bd9cdddd6eaa508ba50c96733f50e5c666ee6273374fbc3e99b4b1ebc024c2d676efbf09aa6c2c79ce71c556b40e03a7ff9acac254350226fc275f4"
 
 headers = {
     "Authorization": f"Bearer {STRAPI_TOKEN}",
     "Content-Type": "application/json"
 }
 
-st.title("🌍 Yapay Zeka Destekli Gezi Rehberi")
-st.markdown("---")
-
 def blok_metin_coz(blocks):
-    """Strapi Rich Text yapısını güvenli bir şekilde düz metne dönüştürür."""
+    """Strapi Rich Text (Blocks) yapısını güvenli bir şekilde temiz düz metne dönüştürür."""
     if not blocks:
         return ""
     if isinstance(blocks, str):
@@ -28,106 +25,106 @@ def blok_metin_coz(blocks):
                     metin_parcalari.append(child.get('text', ''))
             elif isinstance(block, str):
                 metin_parcalari.append(block)
-        return " ".join(metin_parcalari)
+        return "\n".join(metin_parcalari)
     return ""
 
+st.sidebar.markdown("### 🌐 Dil Seçimi / Language")
+secilen_dil = st.sidebar.radio("Sitenin Dili / Site Language", ["Türkçe", "English"], label_visibility="collapsed")
+
+strapi_locale = "tr" if secilen_dil == "Türkçe" else "en"
+
 @st.cache_data(ttl=1)
-def strapi_verileri_getir():
-    # Şehir ilişkilerini de çekebilmek için populate=* zorunludur
-    url = f"{BASE_URL}/api/mekanlars?populate=*"
+def mekanlari_getir(locale_kodu):
+    url = f"{BASE_URL}/api/mekanlars?locale={locale_kodu}&populate=bilesenler,kapak_resmi&sort=createdAt:desc"
     try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return response.json().get('data', [])
+        res = requests.get(url, headers=headers)
+        if res.ok:
+            return res.json().get("data", [])
     except Exception as e:
-        st.error(f"Bağlantı Hatası: {e}")
+        st.error(f"Sunucuya bağlanırken bir hata oluştu: {e}")
     return []
 
-ham_veriler = strapi_verileri_getir()
-tum_mekanlar = []
+mekanlar_listesi = mekanlari_getir(strapi_locale)
 
-# --- 1. VERİLERİ STRAPI'DEN ÇEKME VE TEMİZLEME ---
-if ham_veriler:
-    for oge in ham_veriler:
-        attrs = oge.get('attributes', {}) or oge
-        
-        baslik = attrs.get('mekan_adi') or "Bilinmeyen Mekan"
-        icerik_tr = blok_metin_coz(attrs.get('aciklama')) or "Açıklama veritabanında mevcut değil."
-        icerik_en = blok_metin_coz(attrs.get('aciklama_en')) or "No translation available yet."
-        
-        # Kesinlikle kırılmayan yüksek kaliteli Unsplash görselleri
-        gorsel_url = "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800"
-        if "Colosseum" in baslik or "Roma" in baslik or "Amfi" in baslik:
-            gorsel_url = "https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=800"
-        elif "Louvre" in baslik or "Paris" in baslik or "Müze" in baslik:
-            gorsel_url = "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800"
-        elif "Big" in baslik or "Londra" in baslik or "Saat" in baslik:
-            gorsel_url = "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800"
-        elif "Galata" in baslik or "İstanbul" in baslik or "Istanbul" in baslik:
-            gorsel_url = "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800"
+sozluk = {
+    "Türkçe": {
+        "ana_baslik": "🗺️ Gezi Rehberi",
+        "alt_baslik": "Yapay zeka destekli RSS akışları ve dinamik tüyolarla donatılmış mekan rehberiniz.",
+        "mekan_sec": "Keşfetmek istediğiniz mekanı seçin:",
+        "bos_uyari": "Henüz eklenmiş bir mekan bulunamadı veya sunucunuz şu an uyanıyor. Lütfen birazdan sayfayı yenileyin.",
+        "tuyo_baslik": "🧭 Gezgin Tüyoları & Önemli Bilgiler",
+        "tuyo_bos": "Bu mekan için henüz dinamik gezgin tüyoları (Dynamic Zone) girilmemiş.",
+        "aciklama_bos": "Açıklama bulunmuyor.",
+        "kritik": "Kritik Uyarı",
+        "altin": "Altın Tavsiye",
+        "genel": "Genel Bilgi"
+    },
+    "English": {
+        "ana_baslik": "🗺️ Travel Guide",
+        "alt_baslik": "Your travel guide equipped with AI-powered RSS feeds and dynamic tips.",
+        "mekan_sec": "Select the place you want to explore:",
+        "bos_uyari": "No places found yet or your server is waking up. Please refresh the page in a moment.",
+        "tuyo_baslik": "🧭 Traveler Tips & Important Information",
+        "tuyo_bos": "No dynamic traveler tips (Dynamic Zone) have been entered for this location yet.",
+        "aciklama_bos": "No description available.",
+        "kritik": "Critical Warning",
+        "altin": "Golden Tip",
+        "genel": "General Info"
+    }
+}
 
-        # Şehir ilişkisini okuma ve Türkçe karakter hatasını engelleme
-        sehir_data = attrs.get('sehirler', {}).get('data')
-        sehir_adi = "İstanbul"  # Varsayılan yedek şehir
-        
-        if sehir_data:
-            if isinstance(sehir_data, list) and len(sehir_data) > 0:
-                sehir_adi = sehir_data[0].get('attributes', {}).get('AD', "İstanbul")
-            elif isinstance(sehir_data, dict):
-                sehir_adi = sehir_data.get('attributes', {}).get('AD', "İstanbul")
-        
-        # Karşılaştırma kolaylığı için şehir ismini standartlaştırıyoruz (Örn: Istanbul -> İstanbul)
-        if sehir_adi.lower() in ["istanbul", "i̇stanbul"]:
-            sehir_adi = "İstanbul"
+m = sozluk[secilen_dil]
 
-        tum_mekanlar.append({
-            "Baslik": baslik,
-            "Icerik_TR": icerik_tr,
-            "Icerik_EN": icerik_en,
-            "Sehir": sehir_adi,
-            "Gorsel": gorsel_url
-        })
+st.title(m["ana_baslik"])
+st.write(m["alt_baslik"])
+st.write("---")
+
+if not mekanlar_listesi:
+    st.info(m["bos_uyari"])
 else:
-    # Veritabanına henüz veri gitmediyse veya izin hatası varsa çalışacak ÇÖKMEYİ ENGELLEYEN YEDEK HAVUZ
-    tum_mekanlar = [
-        {"Baslik": "Galata Kulesi", "Icerik_TR": "İstanbul'un en tarihi ve ikonik yapılarından biridir.", "Icerik_EN": "One of the most historical and iconic structures in Istanbul.", "Sehir": "İstanbul", "Gorsel": "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=800"},
-        {"Baslik": "Colosseum Arena", "Icerik_TR": "Roma İmparatorluğu'nun dünyaca ünlü gladyatör amfitiyatrosu.", "Icerik_EN": "The world-famous gladiator amphitheater of the Roman Empire.", "Sehir": "Roma", "Gorsel": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=800"},
-        {"Baslik": "Louvre Müzesi", "Icerik_TR": "Paris'in kalbinde bulunan dünyanın en büyük ve en ünlü sanat müzesi.", "Icerik_EN": "The world's largest and most famous art museum located in the heart of Paris.", "Sehir": "Paris", "Gorsel": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800"},
-        {"Baslik": "Big Ben", "Icerik_TR": "Londra'nın simgesi olan tarihi Westminster saat kulesi.", "Icerik_EN": "The historical Westminster clock tower, which is the symbol of London.", "Sehir": "Londra", "Gorsel": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800"}
-    ]
+    mekan_isimleri = [oge.get("mekan_adi", "İsimsiz Mekan") for oge in mekanlar_listesi if isinstance(oge, dict)]
+        
+    st.sidebar.markdown(f"### 📍 {m['mekan_sec']}")
+    secilen_mekan_adi = st.sidebar.selectbox("Mekanlar", mekan_isimleri, label_visibility="collapsed")
 
-# --- 2. KULLANICI ARAYÜZÜ (STREAMLIT) ---
-st.markdown("### 🗺️ Gezeceğiniz Şehri Seçin:")
-
-# Şehirleri benzersiz olarak alıp alfabetik sıralıyoruz
-mevcut_sehirler = sorted(list(set(m["Sehir"] for m in tum_mekanlar)))
-
-# Seçim kutusu
-secilen_sehir = st.selectbox("Şehir Seçin", mevcut_sehirler, index=0, label_visibility="collapsed")
-
-# Seçilen şehre göre filtreleme
-filtrelenmis_mekanlar = [m for m in tum_mekanlar if m["Sehir"] == secilen_sehir]
-
-st.markdown(f"## 📍 {secilen_sehir} Gezi Noktaları")
-st.markdown("---")
-
-if filtrelenmis_mekanlar:
-    cols = st.columns(3)
-    for index, mekan in enumerate(filtrelenmis_mekanlar):
-        with cols[index % 3]:
-            st.markdown(
-                f"""
-                <div style="border:1px solid #e6e9ef; padding:15px; border-radius:12px; background-color:#ffffff; margin-bottom:20px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05);">
-                    <img src="{mekan['Gorsel']}" style="width:100%; height:220px; object-fit:cover; border-radius:8px; margin-bottom:10px;">
-                    <h3 style="margin-top:0; color:#1f1f1f; font-size:19px;">🏛️ {mekan['Baslik']}</h3>
-                    <p style="font-size:14px; color:#444444; line-height:1.6; min-height:65px;">{mekan['Icerik_TR']}</p>
-                </div>
-                """, 
-                unsafe_allow_html=True
-            )
+    for oge in mekanlar_listesi:
+        if isinstance(oge, dict) and oge.get("mekan_adi") == secilen_mekan_adi:
             
-            with st.expander(f"✨ Click for AI Translation"):
-                st.caption("🤖 Yapay Zeka Tarafından Çevrilen İngilizce İçerik:")
-                st.info(mekan['Icerik_EN'])
-else:
-    st.info(f"Şu an için {secilen_sehir} şehrine ait bir içerik bulunmuyor.")
+            puan = oge.get("puan", 5)
+            yildizlar = "⭐" * int(puan) if puan else "⭐"
+            st.header(f"📍 {oge.get('mekan_adi')} {yildizlar}")
+            
+            kapak_verisi = oge.get("kapak_resmi")
+            if isinstance(kapak_verisi, dict):
+                resim_url_kisa = kapak_verisi.get("url", "")
+                if resim_url_kisa:
+                    tam_resim_url = resim_url_kisa if resim_url_kisa.startswith("http") else f"{BASE_URL}{resim_url_kisa}"
+                    st.image(tam_resim_url, use_container_width=True)
+            
+            st.write("") 
+            
+            ham_aciklama = oge.get("aciklama")
+            temiz_aciklama = blok_metin_coz(ham_aciklama)
+            st.write(temiz_aciklama if temiz_aciklama else m["aciklama_bos"])
+            st.write("---")
+            
+            bilesenler = oge.get("bilesenler", [])
+            if bilesenler and isinstance(bilesenler, list):
+                st.subheader(m["tuyo_baslik"])
+                for b in bilesenler:
+                    if isinstance(b, dict):
+                        tur = b.get("__component") or b.get("component")
+                        
+                        if tur == "gezi.tuyo-kutusu" or "tuyo-kutusu" in str(tur):
+                            tip = b.get("tip", "Bilgi")
+                            mesaj_icerigi = b.get("mesaj")
+                            mesaj_metni = blok_metin_coz(mesaj_icerigi)
+                            
+                            if tip == "Uyar":
+                                st.error(f"⚠️ **{m['kritik']}:** {mesaj_metni}")
+                            elif tip == "Tavsiye":
+                                st.success(f"💡 **{m['altin']}:** {mesaj_metni}")
+                            elif tip == "Bilgi":
+                                st.info(f"ℹ️ **{m['genel']}:** {mesaj_metni}")
+            else:
+                st.warning(m["tuyo_bos"])
