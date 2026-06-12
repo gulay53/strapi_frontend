@@ -3,7 +3,8 @@ import requests
 
 st.set_page_config(page_title="Akıllı Gezi Rehberi 🎉", page_icon="🌍", layout="wide")
 
-BASE_URL = "https://gezi-rehberi-1.onrender.com"
+BASE_URL ="https://gezi-rehberi-jd3l.onrender.com"
+
 STRAPI_TOKEN = "2abfc25c36f8bc3ef6c60a350ab7da984b885cc0c7e48efb2ff440660c620eaef60ee968c627207316793b1709c5d58e8fed445c8d3e9bea4eecd31d205d17c0e218a2db4e3a96fb0f952037668d8acbb29ec62183a8f1d965f7804bd5897916d441cebad04147fd8599fba267df6b4fdc40a8d69f66a4007cfe129e416f1517"
 
 headers = {
